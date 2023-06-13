@@ -8,7 +8,6 @@ import bot.commands.StartCommand;
 import org.telegram.telegrambots.extensions.bots.commandbot.TelegramLongPollingCommandBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -22,18 +21,18 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
     private static final String CURRENCY_SELECTION_CALLBACK = "currency_selection";
     private static final String BACK_TO_MENU_CALLBACK = "back_to_menu";
     private static final String CONVERTOR_MENU_CALLBACK = "convertor_menu";
+    private double convertAmount;
+
     public CurrencyTGBot() {
         monoService = new MonoService();
         privatService = new PrivatService();
 
         register(new StartCommand());
     }
-
     @Override
     public String getBotUsername() {
         return BotConstans.BOT_NAME;
     }
-
     @Override
     public void processNonCommandUpdate(Update update) {
         if (update.hasCallbackQuery()) {
@@ -46,22 +45,38 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
                     Currency currency = Currency.valueOf(callbackQuery);
                     showCurrencyRate(update.getCallbackQuery().getMessage().getChat(), currency);
                 }
-                case CONVERTOR_MENU_CALLBACK -> showConvertorMenu(update.getCallbackQuery().getMessage().getChat());
+                case CONVERTOR_MENU_CALLBACK -> getAmount(update.getCallbackQuery().getMessage().getChat());
+                case "uah-to-usd" ->
+                    getConvertRateToCurrency
+                            (update.getCallbackQuery().getMessage().getChat(), Currency.USD, convertAmount);
+                case "uah-to-eur" ->
+                        getConvertRateToCurrency
+                                (update.getCallbackQuery().getMessage().getChat(), Currency.EUR, convertAmount);
+                case "usd-to-uah" ->
+                        getConvertRateToUAH
+                                (update.getCallbackQuery().getMessage().getChat(), Currency.USD, convertAmount);
+                case "eur-to-uah" ->
+                        getConvertRateToUAH
+                                (update.getCallbackQuery().getMessage().getChat(), Currency.EUR, convertAmount);
+            }
+        } else if (update.hasMessage() && update.getMessage().hasText()) {
+            String messageText = update.getMessage().getText();
+            if (convertAmount == 0 && messageText.matches("-?\\d+(\\.\\d+)?")) {
+                convertAmount = Double.parseDouble(messageText);
+                showConvertorMenu(update.getMessage().getChat());
             }
         }
     }
-
     @Override
     public String getBotToken() {
         return BotConstans.BOT_TOKEN;
     }
-
     public void showCurrencyMenu(Chat chat) {
         SendMessage message = createMessage(chat.getId().toString(), "Виберіть валюту:");
 
         InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
-                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("USD", Currency.USD.name())))
-                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("EUR", Currency.EUR.name())))
+                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("USD\uD83D\uDCB5", Currency.USD.name())))
+                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("EUR\uD83D\uDCB6", Currency.EUR.name())))
                 .keyboardRow(Collections.singletonList(createInlineKeyboardButton
                         ("Попереднє меню", BACK_TO_MENU_CALLBACK)))
                 .build();
@@ -74,11 +89,9 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
             e.printStackTrace();
         }
     }
-
     public void showCurrencySelection(Chat chat) {
         showCurrencyMenu(chat);
     }
-
     public void showMainMenu(Chat chat) {
         SendMessage message = createMessage(chat.getId().toString(), "Виберіть функцію:");
 
@@ -97,15 +110,14 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
             e.printStackTrace();
         }
     }
-
     public void showCurrencyRate(Chat chat, Currency currency) {
         String rate = getCurrencyRate(currency);
 
         SendMessage message = createMessage(chat.getId().toString(), rate);
 
         InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
-                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("USD", Currency.USD.name())))
-                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("EUR", Currency.EUR.name())))
+                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("USD\uD83D\uDCB5", Currency.USD.name())))
+                .keyboardRow(Collections.singletonList(createInlineKeyboardButton("EUR\uD83D\uDCB6", Currency.EUR.name())))
                 .keyboardRow(Collections.singletonList(createInlineKeyboardButton
                         ("Попереднє меню", BACK_TO_MENU_CALLBACK)))
                 .build();
@@ -118,8 +130,18 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
             e.printStackTrace();
         }
     }
-    public void showConvertorMenu(Chat chat){
-        SendMessage message = createMessage(chat.getId().toString(), "Виберіть тип конвертування:");
+    public void getAmount(Chat chat) {
+        SendMessage message = createMessage(chat.getId().toString(), "Введіть суму:\n\uD83D\uDCB5\uD83D\uDCB6");
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+    public void showConvertorMenu(Chat chat) {
+        SendMessage message = createMessage
+                (chat.getId().toString(), "Виберіть тип конвертування:\n\uD83D\uDCB5\uD83D\uDCB6");
 
         InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
                 .keyboardRow(Collections.singletonList(createInlineKeyboardButton
@@ -145,19 +167,43 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
         switch (currency) {
             case USD:
             case EUR:
-                return monoService.getCurrencyRate(currency) + "\n\n" + privatService.getCurrencyRate(currency);
+                return monoService.getCurrencyRate(currency) + "\n" + privatService.getCurrencyRate(currency);
             default:
                 return "";
         }
     }
-
+    private void getConvertRateToCurrency(Chat chat,Currency currency,double value){
+        double mono = monoService.convertorToCurrency(currency, value);
+        double privat=privatService.convertorToCurrency(currency,value);
+        String result="Моно Банк: \uD83C\uDDFA\uD83C\uDDE6 "+mono+" "+currency+"\n"+
+                "Приват Банк: \uD83C\uDDFA\uD83C\uDDE6 "+privat+" "+ currency;
+        SendMessage message = createMessage
+                (chat.getId().toString(),result);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+    private void getConvertRateToUAH(Chat chat,Currency currency,double value){
+        double mono = monoService.convertorToUAH(currency, value);
+        double privat=privatService.convertorToUAH(currency,value);
+        String result="Моно Банк: \uD83C\uDDFA\uD83C\uDDE6 "+mono+" "+Currency.UAH+"\n"+
+                "Приват Банк: \uD83C\uDDFA\uD83C\uDDE6 "+privat+" "+ Currency.UAH;
+        SendMessage message = createMessage
+                (chat.getId().toString(),result);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
     private SendMessage createMessage(String chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
         return message;
     }
-
     private InlineKeyboardButton createInlineKeyboardButton(String text, String callbackData) {
         return InlineKeyboardButton.builder()
                 .text(text)
@@ -165,4 +211,3 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
                 .build();
     }
 }
-

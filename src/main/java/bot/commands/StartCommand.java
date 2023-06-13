@@ -21,9 +21,10 @@ public class StartCommand extends BotCommand {
 
     @Override
     public void execute(AbsSender absSender, User user, Chat chat, String[] arguments) {
-        String text="Привіт!\nЯ тестовий проект студента GoIT. Я знаю курси $ i € в різних банках України, " +
+        String text="Привіт!\uD83D\uDC4B" +
+                "\nЯ тестовий проект студента GoIT. Я знаю курси $ i € в різних банках України, " +
                 "Я оновлюю інформацю про курс після команди /start " +
-                "а також вмію конвертувати в гривні" +
+                "а також вмію конвертувати валюту\uD83D\uDE0A" +
                 "\nВиберіть функцію :";
         SendMessage message= new SendMessage();
         message.setText(text);
@@ -31,7 +32,7 @@ public class StartCommand extends BotCommand {
         InlineKeyboardButton currencyButton =
                 InlineKeyboardButton.builder().text("Курси валют \uD83D\uDCB5\uD83D\uDCB4").callbackData("currency_selection").build();
         InlineKeyboardButton convertorButton =
-                InlineKeyboardButton.builder().text("Конвертор \uD83D\uDCB5\uD83D\uDCB4").callbackData("Конвертор").build();
+                InlineKeyboardButton.builder().text("Конвертор \uD83D\uDCB5\uD83D\uDCB4").callbackData("convertor_menu").build();
 
         InlineKeyboardMarkup keyboard = InlineKeyboardMarkup
                 .builder()
