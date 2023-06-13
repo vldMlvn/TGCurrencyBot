@@ -28,14 +28,12 @@ public class MonoService implements CurrencyService {
             throw new RuntimeException(e);
         }
     }
-
     public List<MonoItem> getItemList(Currency currency) {
         int code = getCurrencyCode(currency);
         return monoItems.stream()
                 .filter(s -> s.getCurrencyCodeA() == code)
                 .collect(Collectors.toList());
     }
-
     @Override
     public String getCurrencyRate(Currency currency) {
         int code = getCurrencyCode(currency);
@@ -52,7 +50,6 @@ public class MonoService implements CurrencyService {
                 "\nКупівля: " + buy + " грн." +
                 "\nПродаж: " + Math.round(sell*100.0)/100.0 + " грн";
     }
-
     @Override
     public double convertorToUAH(Currency currency, double value) {
         int code = getCurrencyCode(currency);
@@ -63,7 +60,6 @@ public class MonoService implements CurrencyService {
                 .orElseThrow();
         return buy * value;
     }
-
     @Override
     public double convertorToCurrency(Currency currency, double value) {
         int code = getCurrencyCode(currency);
@@ -74,7 +70,6 @@ public class MonoService implements CurrencyService {
                 .orElseThrow();
         return Math.round((value/sell) * 100.0) / 100.0;
     }
-
     private int getCurrencyCode(Currency currency) {
         if (currency.equals(Currency.USD)) {
             return 840;

@@ -7,8 +7,7 @@ public class PrivatItem {
    private Currency base_ccy;
    private double buy;
    private double sale;
-
-    public Currency getCcy() {
+   public Currency getCcy() {
         return ccy;
     }
     public Currency getBase_ccy() {

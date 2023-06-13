@@ -1,7 +1,6 @@
 package api;
 
 import java.util.List;
-
 public interface CurrencyService {
     <E> List<E> getItemList(Currency currency);
     String getCurrencyRate(Currency currency);

@@ -22,7 +22,6 @@ public class CurrencyTGBot extends TelegramLongPollingCommandBot {
     private static final String BACK_TO_MENU_CALLBACK = "back_to_menu";
     private static final String CONVERTOR_MENU_CALLBACK = "convertor_menu";
     private double convertAmount;
-
     public CurrencyTGBot() {
         monoService = new MonoService();
         privatService = new PrivatService();

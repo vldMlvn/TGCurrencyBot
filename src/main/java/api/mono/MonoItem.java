@@ -8,11 +8,9 @@ public class MonoItem {
     public int getCurrencyCodeA() {
         return currencyCodeA;
     }
-
     public double getRateBuy() {
         return rateBuy;
     }
-
     public double getRateSell() {
         return rateSell;
     }
